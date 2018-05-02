@@ -1,21 +1,24 @@
-#----------------------------------------------------------------------------#
+# ----------------------------------------------------------------------------#
 # Imports
-#----------------------------------------------------------------------------#
+# ----------------------------------------------------------------------------#
 
 from flask import Flask, render_template, request
-# from flask.ext.sqlalchemy import SQLAlchemy
 import logging
 from logging import Formatter, FileHandler
+
+from pymongo import MongoClient
+
 from forms import *
 import os
 
-#----------------------------------------------------------------------------#
+# ----------------------------------------------------------------------------#
 # App Config.
-#----------------------------------------------------------------------------#
+# ----------------------------------------------------------------------------#
 
 app = Flask(__name__)
 app.config.from_object('config')
-#db = SQLAlchemy(app)
+client = MongoClient('mongodb://localhost:27017')
+db = client['development']
 
 # Automatically tear down SQLAlchemy.
 '''
@@ -36,14 +39,73 @@ def login_required(test):
             return redirect(url_for('login'))
     return wrap
 '''
-#----------------------------------------------------------------------------#
+
+# ----------------------------------------------------------------------------#
 # Controllers.
-#----------------------------------------------------------------------------#
+# ----------------------------------------------------------------------------#
+PERIODS = {
+    'rate_day': '1 Day',
+    'rate_week_1': '1 Week',
+    'rate_weeks_2': '2 Weeks',
+    'rate_month_1': '1 Month',
+    'rate_months_2': '2 Months',
+    'rate_months_3': '3 Months',
+    'rate_months_4': '4 Months',
+    'rate_months_5': '5 Months',
+    'rate_months_6': '6 Months',
+    'rate_months_7': '7 Months',
+    'rate_months_8': '8 Months',
+    'rate_months_9': '9 Months',
+    'rate_months_10': '10 Months',
+    'rate_months_11': '11 Months',
+    'rate_months_12': '12 Months',
+}
+
+PERCENTAGE = 100
+MONTHS = 12
 
 
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 def home():
-    return render_template('pages/placeholder.home.html')
+    results = []
+    contexts = {
+        'amount_requested': 0,
+        'period': '',
+        'periods': PERIODS,
+        'results': results
+    }
+    context = {
+        'interest_rated': 0,
+        'interest_earned': 0,
+        'bank_name': 'N/A',
+    }
+    if request.method == 'POST':
+        amount_requested = int(request.form['amount'])
+        period = request.form['period']
+
+        rates = db.rates.find()
+        for rate in rates:
+            try:
+                range_amounts = rate['rates'][period]
+                result = dict()
+                for amount, interest_rated in range_amounts:
+                    if amount_requested <= amount:
+                        result['interest_rated'] = interest_rated
+                        result['interest_earned'] = round(interest_rated * amount_requested / PERCENTAGE / MONTHS, 2)
+                        result['amount_requested'] = amount_requested
+                        result['bank_name'] = rate['bank_name']
+                        result['period'] = period
+                        break
+                results.append(result)
+            except KeyError:
+                pass
+        results = sorted(results, key=lambda k: k['interest_earned'], reverse=True)
+
+        contexts['amount_requested'] = amount_requested
+        contexts['period'] = period
+        contexts['results'] = results[1:]
+        contexts['best_result'] = results[:1]
+    return render_template('pages/placeholder.home.html', **contexts)
 
 
 @app.route('/about')
@@ -68,18 +130,20 @@ def forgot():
     form = ForgotForm(request.form)
     return render_template('forms/forgot.html', form=form)
 
+
 # Error handlers.
 
 
 @app.errorhandler(500)
 def internal_error(error):
-    #db_session.rollback()
+    # db_session.rollback()
     return render_template('errors/500.html'), 500
 
 
 @app.errorhandler(404)
 def not_found_error(error):
     return render_template('errors/404.html'), 404
+
 
 if not app.debug:
     file_handler = FileHandler('error.log')
@@ -91,9 +155,9 @@ if not app.debug:
     app.logger.addHandler(file_handler)
     app.logger.info('errors')
 
-#----------------------------------------------------------------------------#
+# ----------------------------------------------------------------------------#
 # Launch.
-#----------------------------------------------------------------------------#
+# ----------------------------------------------------------------------------#
 
 # Default port:
 if __name__ == '__main__':

@@ -2,9 +2,43 @@
 {% block title %}Home{% endblock %}
 {% block content %}
 
-<div class="page-header">
-  <h1>Sticky footer with fixed navbar</h1>
-</div>
-<p class="lead">Pin a fixed-height footer to the bottom of the viewport in desktop browsers with this custom HTML and CSS. A fixed navbar has been added within <code>#wrap</code> with <code>padding-top: 60px;</code> on the <code>.container</code>.</p>
+    <div class="page-header">
+        <h3>Get The Best Fixed Deposit Interest Rates for 2018 Now!</h3>
+    </div>
+    <div class="panel">
+        <div class="panel-heading">
+            <form method="post" action="/">
+                I want to deposit
+                <input type="number" name="amount" class="form-control" min="1" value="{{ amount_requested }}" required>
+                Over
+                <select name="period" class="form-control">
+                    {% for key, value  in periods.items() %}
+                        <option value="{{ key }}" {{ 'selected' if period == key else '' }}>{{ value }}</option>
+                    {% endfor %}
+                </select>
+                <br/>
+                <input type="submit" class="btn btn-primary" value="calculate">
+            </form>
+        </div>
+        <div class="panel-body">
 
+            <table class="table table-bordered">
+                {% for item in best_result %}
+                    <tr>
+                        <td>{{ item.bank_name }}<span class="label label-success">Best Offer</span></td>
+                        <td>{{ item.interest_rated }} %</td>
+                        <td>$ {{ item.interest_earned }} (Interest Earned)</td>
+                    </tr>
+                {% endfor %}
+
+                {% for item in results %}
+                    <tr>
+                        <td>{{ item.bank_name }}</td>
+                        <td>{{ item.interest_rated }} %</td>
+                        <td>$ {{ item.interest_earned }} (Interest Earned)</td>
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
 {% endblock %}
