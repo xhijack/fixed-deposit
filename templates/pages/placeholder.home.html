@@ -9,7 +9,7 @@
         <div class="panel-heading">
             <form method="post" action="/">
                 I want to deposit
-                <input type="number" name="amount" class="form-control" min="1" value="{{ amount_requested }}" required>
+                <input type="number" name="amount" class="form-control" min="1" max="1000000" value="{{ amount_requested }}" required>
                 Over
                 <select name="period" class="form-control">
                     {% for key, value  in periods.items() %}

@@ -18,6 +18,7 @@ Fixed Deposit. Please install mongodb first or using mongodb service such mlab.c
 
 3. Run the development server:
   ```
+  $ python seed.py
   $ python app.py
   ```
 
