@@ -74,11 +74,6 @@ def home():
         'periods': PERIODS,
         'results': results
     }
-    context = {
-        'interest_rated': 0,
-        'interest_earned': 0,
-        'bank_name': 'N/A',
-    }
     if request.method == 'POST':
         amount_requested = int(request.form['amount'])
         period = request.form['period']
@@ -96,10 +91,13 @@ def home():
                         result['bank_name'] = rate['bank_name']
                         result['period'] = period
                         break
-                results.append(result)
+
+                if result != {}:
+                    results.append(result)
             except KeyError:
                 pass
-        results = sorted(results, key=lambda k: k['interest_earned'], reverse=True)
+
+        results = [] if results == [] else sorted(results, key=lambda k: k['interest_earned'], reverse=True)
 
         contexts['amount_requested'] = amount_requested
         contexts['period'] = period
